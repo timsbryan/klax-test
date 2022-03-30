@@ -88,14 +88,16 @@ WalkingCube.prototype.createLights = function(){
 WalkingCube.prototype.walk = function() {
   if(this.cube.rotation.x < this.targetRotation) {
     rotateAboutPoint(this.cube, this.pivotPointPos, new THREE.Vector3(1, 0, 0), THREE.Math.degToRad(1));
-    // this.cube.position.applyAxisAngle(new THREE.Vector3(1,0,0), THREE.Math.degToRad(150.0)); // rotate the POSITION
-    // this.cube.rotateOnAxis(new THREE.Vector3(1,0,0), THREE.Math.degToRad(150.0))
-    // console.log(this.cube.rotation.x, THREE.Math.radToDeg(this.cube.rotation.x));
   } else {
     this.cube.rotation.x = this.targetRotation;
     this.targetRotation = this.targetRotation + THREE.Math.degToRad(90);
 
-    this.pivotPointPos.setZ(this.pivotPointPos.z + 5);
+    if(this.isUpright) {
+      this.pivotPointPos.setZ(this.pivotPointPos.z + 5);
+    } else {
+      this.pivotPointPos.setZ(this.pivotPointPos.z + 1);
+    }
+
     this.pivotPointHelper.position.set(this.pivotPointPos.x, this.pivotPointPos.y, this.pivotPointPos.z);
     this.isUpright = !this.isUpright;
   }
@@ -122,6 +124,5 @@ function rotateAboutPoint(obj, point, axis, theta){
   obj.position.add(point); // re-add the offset
 
   // obj.rotateOnAxis(axis, theta); // rotate the OBJECT
-  // obj.rotateX(theta);
   obj.rotation.x += theta;
 }
