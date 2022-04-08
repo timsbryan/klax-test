@@ -1,5 +1,8 @@
 import * as THREE from "three";
+import * as TWEEN from "@tweenjs/tween.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+
+let tween;
 
 var WalkingCube = function() {
   this.scene = new THREE.Scene();
@@ -59,7 +62,11 @@ WalkingCube.prototype.createCube = function() {
   this.pivotPointPos = new THREE.Vector3(-2.5, -2.5, .5)
   this.pivotPointHelper.position.set(this.pivotPointPos.x, this.pivotPointPos.y, this.pivotPointPos.z);
 
-  this.targetRotation = THREE.Math.degToRad(90);
+  this.targetRotation = new THREE.Vector3(THREE.Math.degToRad(90), 0, 0);
+  this.currentRotation = new THREE.Vector3(0, 0, 0);
+
+  tween = new TWEEN.Tween(this.currentRotation).to(this.targetRotation, 2000).easing(TWEEN.Easing.Bounce.Out).repeat(Infinity);
+  tween.start();
 }
 
 WalkingCube.prototype.createFloor = function() {
@@ -86,11 +93,19 @@ WalkingCube.prototype.createLights = function(){
 };
 
 WalkingCube.prototype.walk = function() {
-  if(this.cube.rotation.x < this.targetRotation) {
-    rotateAboutPoint(this.cube, this.pivotPointPos, new THREE.Vector3(1, 0, 0), THREE.Math.degToRad(1));
+  this.oldRot = this.currentRotation.x;
+  TWEEN.update();
+  this.newRot = this.currentRotation.x;
+  this.theta = this.newRot - this.oldRot;
+
+  if(this.cube.rotation.x < this.targetRotation.x) {
+    rotateAboutPoint(this.cube, this.pivotPointPos, new THREE.Vector3(1, 0, 0), this.theta);
   } else {
-    this.cube.rotation.x = this.targetRotation;
-    this.targetRotation = this.targetRotation + THREE.Math.degToRad(90);
+    tween.stop();
+    this.cube.rotation = this.targetRotation;
+    this.targetRotation.x = this.targetRotation.x + THREE.Math.degToRad(90);
+    tween = new TWEEN.Tween(this.currentRotation).to(this.targetRotation, 2000).easing(TWEEN.Easing.Bounce.Out);
+    tween.start();
 
     if(this.isUpright) {
       this.pivotPointPos.setZ(this.pivotPointPos.z + 5);
@@ -126,3 +141,15 @@ function rotateAboutPoint(obj, point, axis, theta){
   // obj.rotateOnAxis(axis, theta); // rotate the OBJECT
   obj.rotation.x += theta;
 }
+/**
+ *
+ * @param {int} x - percent complete
+ * @param {Time} t - elapsed time
+ * @param {int} b - start value
+ * @param {int} c - end value
+ * @param {Time} d - total duration
+ * @returns {int} value - the amount the value should be set to
+ */
+function easeOutQuad (x, t, b, c, d) {
+    return -c *(t/=d)*(t-2) + b;
+};
